@@ -1,0 +1,41 @@
+import telegram
+from telegram import ReplyKeyboardMarkup, KeyboardButton 
+import requests
+
+API_TOKEN = 'YOUR_API_TOKEN'  
+API_KEY = 'YOUR_API_KEY' 
+bot = telegram.Bot(token=API_TOKEN)
+
+# Buttons 
+button1 = ReplyKeyboardMarkup([[KeyboardButton('📱Generate Number')], 
+                         [KeyboardButton('📩Read SMS')],
+                         [KeyboardButton('☎️Blacklist Number')]])
+
+def handle_start(msg): 
+    chat_id = msg.chat.id
+    bot.send_message(chat_id, 'Welcome to your Telegram Bot! I can help generate phone numbers and read SMS messages.')
+    bot.send_message(chat_id, 'Please choose an option:', reply_markup=button1)
+
+def handle_message(msg):
+    chat_id = msg.chat.id
+    if msg.text == '📱Generate Number':
+        bot.send_message(chat_id, 'Enter website ID and country code:')
+        # Get input and call API method
+        
+    elif msg.text == '📩Read SMS':
+        bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
+        # Get input and call API method
+        
+    elif msg.text == '☎️Blacklist Number': 
+        bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
+        # Get input and call API method
+        
+def generate_phone_number(website_id, country_code):
+    url = f'https://autofications.com/V2/API.php?action=generate&username=USERNAME&key={API_KEY}&website={website_id}&country={country_code}'
+    response = requests.get(url)
+    return response.text  
+
+# Define read_sms() and blacklist_phone_number() similarly... 
+
+bot.message_handler(handle_start, commands=['start'])  
+bot.message_handler(handle_message)
