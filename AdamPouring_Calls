@@ -1,13 +1,12 @@
-import telegram
-from telegram import ReplyKeyboardMarkup, KeyboardButton 
+import telegram 
+from telegram import ReplyKeyboardMarkup, KeyboardButton
 import requests
 
-API_TOKEN = 'YOUR_API_TOKEN'  
-API_KEY = 'YOUR_API_KEY' 
+API_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN' 
 bot = telegram.Bot(token=API_TOKEN)
 
-# Buttons 
-button1 = ReplyKeyboardMarkup([[KeyboardButton('📱Generate Number')], 
+# Buttons
+button1 = ReplyKeyboardMarkup([[KeyboardButton('📱Generate Number')],           
                          [KeyboardButton('📩Read SMS')],
                          [KeyboardButton('☎️Blacklist Number')]])
 
@@ -20,22 +19,25 @@ def handle_message(msg):
     chat_id = msg.chat.id
     if msg.text == '📱Generate Number':
         bot.send_message(chat_id, 'Enter website ID and country code:')
-        # Get input and call API method
+        website_id = # Get input from user
+        country_code = # Get input from user
+        phone_number = generate_phone_number(website_id, country_code)
+        bot.send_message(chat_id, f'Your phone number is {phone_number}') 
         
     elif msg.text == '📩Read SMS':
         bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
-        # Get input and call API method
+        # Call read_sms() method 
         
-    elif msg.text == '☎️Blacklist Number': 
+    elif msg.text == '☎️Blacklist Number':
         bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
-        # Get input and call API method
+        # Call blacklist_phone_number() method
         
 def generate_phone_number(website_id, country_code):
-    url = f'https://autofications.com/V2/API.php?action=generate&username=USERNAME&key={API_KEY}&website={website_id}&country={country_code}'
-    response = requests.get(url)
-    return response.text  
+  url = f'https://autofications.com/V2/API.php?action=generate&username=YOUR_USERNAME&key=YOUR_API_KEY&website={website_id}&country={country_code}'
+  response = requests.get(url)
+  return response.text  
 
-# Define read_sms() and blacklist_phone_number() similarly... 
+# Define read_sms() and blacklist_phone_number() similarly...
 
 bot.message_handler(handle_start, commands=['start'])  
-bot.message_handler(handle_message)
+bot.message_handler(handle_message) 
