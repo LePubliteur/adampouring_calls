@@ -1,65 +1,50 @@
 import os
-import requests 
 import telebot
-from telebot import types
-from pymongo import MongoClient
 
 bot = telebot.TeleBot(os.environ.get("TELEGRAM_API_KEY"))
 
-# MongoDB credentials
-MONGO_URI = os.environ.get("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client["MyTelegramBot"]
-users = db["Users"]
-
 # Keyboard buttons
-generate_phone = types.KeyboardButton('📱 Generate Phone Number')  
-verify_phone = types.KeyboardButton('✅ Verify Phone Number')  
-cancel = types.KeyboardButton('❌ Cancel')
+call = telebot.types.KeyboardButton('Call 📞')
+cancel = telebot.types.KeyboardButton('Cancel ❌')
 
 # Reply keyboard 
-keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-keyboard.row(generate_phone, verify_phone) 
-keyboard.row(cancel)
+keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2)
+keyboard.row(call, cancel)
 
-# Helper function to generate and save phone number 
-def generate_and_save_number(user_id):
-    number = generate_number()
-    users.insert_one({"user_id": user_id, "phone_number": number})
-    return number
-
-# Verify phone number 
-def verify_phone_number(message):
-    user = users.find_one({"user_id": message.chat.id})
-    if user: 
-        bot.send_message(message.chat.id, f"Your phone number {user['phone_number']} has been verified! 🎉")
-    else:
-        bot.send_message(message.chat.id, "You don't have a phone number generated. Please generate one first!")
-
-# Generate phone number 
-def generate_phone_number(message):
-    try:
-        number = generate_and_save_number(message.chat.id)
-        bot.send_message(message.chat.id, f"Your phone number {number} has been generated! 📱")
-    except:
-        bot.send_message(message.chat.id, "Sorry, there was an error generating your phone number. Please try again.")
+# Helper function to generate call summary 
+def generate_call_summary():
+    return f"Call connected for 5 minutes. \nCaller: {caller_name} \nCallee: {callee_name}"  
 
 # Start command 
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, 'Welcome! What would you like to do?', reply_markup=keyboard)
 
-# Callbacks 
-@bot.message_handler(func=lambda message: message.text == '📱 Generate Phone Number')  
-def generate_phone(message):
-    generate_phone_number(message)
+# Call handler 
+@bot.message_handler(func=lambda message: message.text == 'Call 📞')  
+def call(message):
+    bot.send_message(message.chat.id, "Please provide the caller and callee names.")
 
-@bot.message_handler(func=lambda message: message.text == '✅ Verify Phone Number')  
-def verify_phone(message):
-    verify_phone_number(message)
+# Caller name handler 
+@bot.message_handler(func=lambda message: True)  
+def caller_name(message):
+    global caller_name
+    caller_name = message.text
     
-@bot.message_handler(func=lambda message: message.text == '❌ Cancel')
+    bot.send_message(message.chat.id, "Please provide the callee name.")
+
+# Callee name handler
+@bot.message_handler(func=lambda message: True) 
+def callee_name(message):
+    global callee_name 
+    callee_name = message.text
+    
+    summary = generate_call_summary()
+    bot.send_message(message.chat.id, summary) 
+    
+# Cancel handler
+@bot.message_handler(func=lambda message: message.text == '❌ Cancel')  
 def cancel(message):
-    bot.send_message(message.chat.id, 'Action cancelled.')  
+    bot.send_message(message.chat.id, "Action cancelled.")  
 
 bot.polling()
