@@ -1,43 +1,56 @@
-import telegram 
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from typing import TypedDict, Tuple
 import requests
+import telebot
+import secrets
 
-API_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN' 
-bot = telegram.Bot(token=API_TOKEN)
+# Types
+class NumberResponse(TypedDict):
+  phone_number: str
 
-# Buttons
-button1 = ReplyKeyboardMarkup([[KeyboardButton('📱Generate Number')],           
-                         [KeyboardButton('📩Read SMS')],
-                         [KeyboardButton('☎️Blacklist Number')]])
+GenerateNumberArgs = Tuple[str, str, int]
 
-def handle_start(msg): 
-    chat_id = msg.chat.id
-    bot.send_message(chat_id, 'Welcome to your Telegram Bot! I can help generate phone numbers and read SMS messages.')
-    bot.send_message(chat_id, 'Please choose an option:', reply_markup=button1)
+bot = telebot.TeleBot(secrets.TELEGRAM_API_KEY)
 
-def handle_message(msg):
-    chat_id = msg.chat.id
-    if msg.text == '📱Generate Number':
-        bot.send_message(chat_id, 'Enter website ID and country code:')
-        website_id = # Get input from user
-        country_code = # Get input from user
-        phone_number = generate_phone_number(website_id, country_code)
-        bot.send_message(chat_id, f'Your phone number is {phone_number}') 
-        
-    elif msg.text == '📩Read SMS':
-        bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
-        # Call read_sms() method 
-        
-    elif msg.text == '☎️Blacklist Number':
-        bot.send_message(chat_id, 'Enter website ID, country code and phone number:')
-        # Call blacklist_phone_number() method
-        
-def generate_phone_number(website_id, country_code):
-  url = f'https://autofications.com/V2/API.php?action=generate&username=YOUR_USERNAME&key=YOUR_API_KEY&website={website_id}&country={country_code}'
-  response = requests.get(url)
-  return response.text  
+username = "myusername123"  
+AUTOFICATIONS_API_KEY = secrets.token_hex(secrets.AUTOFICATIONS_API_KEY) 
+website_id = 1  
 
-# Define read_sms() and blacklist_phone_number() similarly...
+# Generate phone number 
+def generate_number(args: GenerateNumberArgs) -> NumberResponse:
+  """Generate a phone number from the Autofications API.
+  
+  Args:
+    args (Tuple[str, str, int]): Username, API key and website ID
+  
+  Returns:
+    NumberResponse: The generated phone number 
+  """
+  username, api_key, website_id = args  
+  
+  try: 
+    response = requests.get(f"https://autofications.com/V2/API.php?{username}&{api_key}&{website_id}")
+    response.raise_for_status()   
+  except requests.HTTPError as e:
+    raise ValueError(f"Error generating number: {e}") 
+  
+  if response.status_code == 200: 
+    number_response = response.json()
+    return number_response  
+  else:
+    bot.send_message(message.chat.id, "Sorry, the API is currently unavailable. Please try again later.") 
 
-bot.message_handler(handle_start, commands=['start'])  
-bot.message_handler(handle_message) 
+@bot.message_handler(commands=['generate_phone']) 
+def generate_phone(message) -> None:
+  """Generate a phone number from user command."""
+  if not validate(message.text):
+    bot.send_message(message.chat.id, "Invalid command format. Usage: /generate_phone")
+    return 
+  
+  args = (username, AUTOFICATIONS_API_KEY, website_id)
+  number = generate_number(args)
+  bot.send_message(message.chat.id, f"Phone number generated: {number['phone_number']}")
+
+def validate(text: str) -> bool:
+  """Validate `/generate_phone` command input."""
+  # Add input validation here
+  return True
