@@ -1,50 +1,29 @@
-import os
+import os 
+import requests
 import telebot
 
 bot = telebot.TeleBot(os.environ.get("TELEGRAM_API_KEY"))
 
-# Keyboard buttons
-call = telebot.types.KeyboardButton('Call 📞')
-cancel = telebot.types.KeyboardButton('Cancel ❌')
+username = "myusername123"  
+AUTOFICATIONS_API_KEY = os.environ.get("AUTOFICATIONS_API_KEY") 
+website_id = 1
 
-# Reply keyboard 
-keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2)
-keyboard.row(call, cancel)
-
-# Helper function to generate call summary 
-def generate_call_summary():
-    return f"Call connected for 5 minutes. \nCaller: {caller_name} \nCallee: {callee_name}"  
-
-# Start command 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'Welcome! What would you like to do?', reply_markup=keyboard)
+   bot.send_message(message.chat.id, 'Welcome! I can generate phone numbers.')  
 
-# Call handler 
-@bot.message_handler(func=lambda message: message.text == 'Call 📞')  
-def call(message):
-    bot.send_message(message.chat.id, "Please provide the caller and callee names.")
+@bot.message_handler(func=lambda message: message.text == 'Generate Phone 📱') 
+def generate_phone(message):
+  args = (username, AUTOFICATIONS_API_KEY, website_id)
+  response = generate_number_helper(args)
+  number = response['phone_number']
+  bot.send_message(message.chat.id, f"Phone number generated: {number}")
 
-# Caller name handler 
-@bot.message_handler(func=lambda message: True)  
-def caller_name(message):
-    global caller_name
-    caller_name = message.text
-    
-    bot.send_message(message.chat.id, "Please provide the callee name.")
-
-# Callee name handler
-@bot.message_handler(func=lambda message: True) 
-def callee_name(message):
-    global callee_name 
-    callee_name = message.text
-    
-    summary = generate_call_summary()
-    bot.send_message(message.chat.id, summary) 
-    
-# Cancel handler
-@bot.message_handler(func=lambda message: message.text == '❌ Cancel')  
-def cancel(message):
-    bot.send_message(message.chat.id, "Action cancelled.")  
+def generate_number_helper(args): 
+  response = requests.get(f"https://autofications.com/V2/API.php?username={username}&key={AUTOFICATIONS_API_KEY}&website={website_id}")
+  if response.status_code == 200: 
+    return response.json()
+  else:
+    raise ValueError("Error generating number. Please try again.")  
 
 bot.polling()
